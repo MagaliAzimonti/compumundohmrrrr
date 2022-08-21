@@ -1,9 +1,11 @@
-import { useState, createContext } from "react"
+import { useState, createContext, useContext } from "react"
+import NotificationContext from "../Notificacion/Notification"
 
 const CartContext = createContext()
 
 
 export const CartContextProvider = ({ children }) => {
+  const {NotificationResult} = useContext(NotificationContext)
     const [cart, setCart] = useState([])
 
   const addItem = (addProduct) => {
@@ -14,7 +16,8 @@ export const CartContextProvider = ({ children }) => {
             if(prod.id === addProduct.id) {
                 const updateProduct = {
                     ...prod,
-                    quantity: addProduct.quantity
+                    quantity: addProduct.quantity,
+                    total: addProduct.quantity*addProduct.price
                 }
                 return updateProduct
             } else {
@@ -27,17 +30,21 @@ export const CartContextProvider = ({ children }) => {
   } 
 
   const clearCart = () => {
+    NotificationResult('warning', 'Se ha vaciado el carrito')
     setCart([])
   }
 
   const removeItem = (id) => {
-    const EmptyCart = cart.filter(prod => prod.id !== id)
-    setCart(EmptyCart)
+    const prod =  cart.find(pr => pr.id === id)
+    NotificationResult('warning', `Has eliminado ${prod.quantity} ${prod.name}`)
+    const updateCart = cart.filter(prod => prod.id !== id)
+    setCart(updateCart)
   }
 
   const prodInCart = (id) => {
     return cart.some(prod => prod.id === id)
   }
+
   const getCart = () => {
     let acc = 0
 
@@ -54,8 +61,12 @@ export const CartContextProvider = ({ children }) => {
     return producto?.quantity
   }
 
+  const total = cart.reduce((acc, add) => {
+    return acc + add.total
+  }, 0)
+
   return (
-    <CartContext.Provider value={{cart, addItem, getCart, prodInCart, removeItem, clearCart, productQuantity}}>
+    <CartContext.Provider value={{cart, addItem, getCart, prodInCart, removeItem, clearCart, productQuantity, total}}>
         {children}
     </CartContext.Provider>
   )
